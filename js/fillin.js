@@ -299,21 +299,12 @@ const FillIn = {
             prompt = card.front;
             badge = card.type;
         } else {
-            // Back→Front: quick strip first, then AI-cleaned
-            prompt = Cards.stripExamples(card.back);
+            prompt = Cards.getDefinition(card.back);
             badge = 'definition';
         }
 
         document.getElementById('fPrompt').textContent = prompt;
 
-        // Fire AI strip in background for Back→Front
-        if (this.direction === 'back') {
-            Ollama.stripHints(card.back, card.front).then(cleaned => {
-                if (this.cards[this.idx] === card && !this.checked) {
-                    document.getElementById('fPrompt').textContent = cleaned;
-                }
-            });
-        }
         let meta = card.deck;
         if (card.chapter) meta += ` · Ch. ${card.chapter}`;
         if (card.topic) meta += ` · ${card.topic}`;
@@ -359,7 +350,7 @@ const FillIn = {
         } else {
             correctAnswer = card.front;
             revealedText = card.front;
-            questionText = Cards.stripExamples(card.back);
+            questionText = Cards.getDefinition(card.back);
         }
 
         // Lock input, show loader
@@ -383,7 +374,9 @@ const FillIn = {
         if (this.aiEnabled) {
             result = await Ollama.checkAnswer(userAnswer, correctAnswer, questionText, this.direction);
         } else {
-            result = Ollama._fallback(userAnswer, correctAnswer);
+            const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').trim();
+            const ok = norm(userAnswer) === norm(correctAnswer);
+            result = { isCorrect: ok, confidence: ok ? 90 : 85, feedback: ok ? 'Match!' : 'Expected: ' + correctAnswer, source: 'fallback' };
         }
 
         clearInterval(interval);

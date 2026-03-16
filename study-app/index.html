@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study System</title>
+    <link rel="stylesheet" href="css/styles.css?v=7">
+</head>
+<body>
+<div id="app">
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-brand">📚 Study System</div>
+        <div class="nav-links">
+            <button class="nav-btn active" data-view="home">Home</button>
+            <button class="nav-btn" data-view="study">Study</button>
+            <button class="nav-btn" data-view="fillin">Fill-in</button>
+            <button class="nav-btn" data-view="browse">Browse</button>
+            <button class="nav-btn" data-view="quiz">Quiz</button>
+            <button class="nav-btn" data-view="insights">Insights</button>
+        </div>
+        <button class="nav-btn load-btn" id="loadDeckBtn">+ Load Deck</button>
+        <input type="file" id="fileInput" accept=".json" multiple hidden>
+    </nav>
+
+    <!-- ══════════════ HOME ══════════════ -->
+    <div id="homeView" class="view active">
+        <div class="home-container">
+            <h1>Welcome Back</h1>
+            <p class="subtitle">What would you like to do today?</p>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-n" id="statTotal">0</div><div class="stat-l">Total Cards</div></div>
+                <div class="stat-card highlight"><div class="stat-n" id="statDue">0</div><div class="stat-l">Due Today</div></div>
+                <div class="stat-card"><div class="stat-n" id="statMastered">0</div><div class="stat-l">Mastered</div></div>
+            </div>
+            <div class="quick-actions">
+                <button class="action-btn primary" onclick="App.switchView('study')">
+                    <span class="action-icon">📖</span>
+                    <span class="action-text">Study</span>
+                    <span class="action-sub">Flashcard review</span>
+                </button>
+                <button class="action-btn" onclick="App.switchView('fillin')">
+                    <span class="action-icon">✏️</span>
+                    <span class="action-text">Fill-in-the-Blank</span>
+                    <span class="action-sub">Type your answers</span>
+                </button>
+                <button class="action-btn" onclick="App.switchView('browse')">
+                    <span class="action-icon">📋</span>
+                    <span class="action-text">Browse</span>
+                    <span class="action-sub">View all cards</span>
+                </button>
+                <button class="action-btn" onclick="App.switchView('quiz')">
+                    <span class="action-icon">🧪</span>
+                    <span class="action-text">Quiz</span>
+                    <span class="action-sub">Test yourself</span>
+                </button>
+            </div>
+            <div class="decks-section">
+                <h2>Your Decks</h2>
+                <div id="decksList" class="decks-list">
+                    <div class="empty-msg"><p>No decks loaded yet</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ STUDY ══════════════ -->
+    <div id="studyView" class="view">
+        <div class="study-container">
+            <!-- Filters -->
+            <div class="filter-row">
+                <select id="sDeck"><option value="all">All Decks</option></select>
+                <select id="sChapter"><option value="all">All Chapters</option></select>
+            </div>
+            <div class="pill-row" id="sTypePills"></div>
+            <!-- Topic multi-select -->
+            <div class="topic-container" id="sTopicContainer">
+                <button class="topic-toggle" id="sTopicToggle">
+                    <span id="sTopicLabel">All Topics</span><span class="arrow">▼</span>
+                </button>
+                <div class="topic-panel" id="sTopicPanel">
+                    <div class="topic-actions">
+                        <button class="btn xs" onclick="Study.selectAllTopics()">All</button>
+                        <button class="btn xs" onclick="Study.deselectAllTopics()">None</button>
+                    </div>
+                    <div class="topic-list" id="sTopicList"></div>
+                </div>
+            </div>
+            <!-- Mode & Direction -->
+            <div class="toggle-row">
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="sDrillBtn">🔄 Drill</button>
+                    <button class="toggle-btn" id="sSpacedBtn">📅 Spaced</button>
+                </div>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="sDirFront">Front → Back</button>
+                    <button class="toggle-btn" id="sDirBack">Back → Front</button>
+                </div>
+            </div>
+            <!-- Drill options -->
+            <div class="options-box" id="sDrillOpts">
+                <label class="opt-toggle">
+                    <input type="checkbox" id="sMustGetRight">
+                    <span class="opt-label">Must Get Right</span>
+                    <span class="opt-desc">Missed cards return until correct</span>
+                </label>
+            </div>
+            <!-- Progress -->
+            <div class="progress"><div class="progress-bar"><div class="progress-fill" id="sProgressFill"></div></div>
+                <div class="progress-text" id="sProgressText">0 / 0</div></div>
+            <!-- Card -->
+            <div class="card-wrap">
+                <div class="flashcard" id="sFlashcard" onclick="Study.flip()">
+                    <div class="card-badge" id="sCardBadge"></div>
+                    <div class="card-meta" id="sCardMeta"></div>
+                    <div class="card-content" id="sCardContent">Press Start to begin</div>
+                    <div class="card-hint" id="sCardHint"></div>
+                </div>
+            </div>
+            <!-- Controls -->
+            <div class="study-nav">
+                <button class="nav-arrow" id="sPrev" onclick="Study.prev()" disabled>←</button>
+                <div class="rate-btns">
+                    <button class="rate-btn miss" id="sMiss" onclick="Study.rate(false)" disabled>✗ Missed</button>
+                    <button class="rate-btn got" id="sGot" onclick="Study.rate(true)" disabled>✓ Got it</button>
+                </div>
+                <button class="nav-arrow" id="sNext" onclick="Study.next()" disabled>→</button>
+            </div>
+            <button class="btn full end-btn" id="sEndBtn" onclick="Study.endSession()" style="display:none">End Session</button>
+            <button class="btn full primary start-btn" id="sStartBtn" onclick="Study.start()">Start</button>
+        </div>
+    </div>
+
+    <!-- ══════════════ FILL-IN-THE-BLANK ══════════════ -->
+    <div id="fillinView" class="view">
+        <div class="fillin-container">
+            <!-- Filters -->
+            <div class="filter-row">
+                <select id="fDeck"><option value="all">All Decks</option></select>
+                <select id="fChapter"><option value="all">All Chapters</option></select>
+            </div>
+            <div class="pill-row" id="fTypePills"></div>
+            <div class="topic-container" id="fTopicContainer">
+                <button class="topic-toggle" id="fTopicToggle">
+                    <span id="fTopicLabel">All Topics</span><span class="arrow">▼</span>
+                </button>
+                <div class="topic-panel" id="fTopicPanel">
+                    <div class="topic-actions">
+                        <button class="btn xs" onclick="FillIn.selectAllTopics()">All</button>
+                        <button class="btn xs" onclick="FillIn.deselectAllTopics()">None</button>
+                    </div>
+                    <div class="topic-list" id="fTopicList"></div>
+                </div>
+            </div>
+            <!-- Direction -->
+            <div class="toggle-row">
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="fDirFront">Front → Back</button>
+                    <button class="toggle-btn" id="fDirBack">Back → Front</button>
+                </div>
+            </div>
+            <!-- Options -->
+            <div class="options-box">
+                <label class="opt-toggle">
+                    <input type="checkbox" id="fMustGetRight">
+                    <span class="opt-label">Must Get Right</span>
+                    <span class="opt-desc">Missed cards return until correct</span>
+                </label>
+                <label class="opt-toggle" style="margin-top:10px">
+                    <input type="checkbox" id="fSmartCheck">
+                    <span class="opt-label">🤖 AI Checking</span>
+                    <span class="opt-desc">Ollama checks your answers smartly</span>
+                </label>
+                <div id="fAiStatus" class="ai-status"></div>
+            </div>
+            <!-- Progress -->
+            <div class="progress"><div class="progress-bar"><div class="progress-fill" id="fProgressFill"></div></div>
+                <div class="progress-text" id="fProgressText">0 / 0</div></div>
+            <!-- Prompt Card -->
+            <div class="fi-card">
+                <div class="card-badge" id="fBadge"></div>
+                <div class="card-meta" id="fMeta"></div>
+                <div class="fi-prompt" id="fPrompt">Press Start to begin</div>
+            </div>
+            <!-- Answer Input -->
+            <div class="fi-input-row">
+                <input type="text" id="fInput" class="fi-input" placeholder="Type your answer..." autocomplete="off" spellcheck="false">
+                <button class="btn primary fi-check-btn" id="fCheckBtn">Check ↵</button>
+                <div class="fi-loader" id="fLoader" style="display:none">
+                    <div class="spinner"></div>
+                    <span id="fLoaderText">🤔 Checking...</span>
+                </div>
+            </div>
+            <!-- Revealed Answer -->
+            <div class="fi-answer" id="fAnswer" style="display:none"></div>
+            <!-- AI Feedback -->
+            <div class="fi-feedback" id="fFeedback" style="display:none">
+                <div class="fb-header">
+                    <span class="fb-icon" id="fFbIcon"></span>
+                    <span class="fb-label" id="fFbLabel"></span>
+                    <span class="fb-conf" id="fFbConf"></span>
+                </div>
+                <div class="fb-user" id="fFbUser"></div>
+                <div class="fb-text" id="fFbText"></div>
+                <div class="fb-source" id="fFbSource" style="display:none"></div>
+            </div>
+            <!-- Navigation after check -->
+            <div class="fi-nav" id="fNav" style="display:none">
+                <div class="override-btns">
+                    <button class="btn override correct" id="fOverrideRight">👍 I was right</button>
+                    <button class="btn override wrong" id="fOverrideWrong">👎 I was wrong</button>
+                </div>
+                <button class="btn primary fi-next" id="fNextBtn">Next →</button>
+            </div>
+            <button class="btn full end-btn" id="fEndBtn" onclick="FillIn.endSession()" style="display:none">End Session</button>
+            <button class="btn full primary start-btn" id="fStartBtn" onclick="FillIn.start()">Start</button>
+        </div>
+    </div>
+
+    <!-- ══════════════ BROWSE ══════════════ -->
+    <div id="browseView" class="view">
+        <div class="browse-container">
+            <div class="browse-header">
+                <h2>Browse Cards <span id="bCount" class="count">(0)</span></h2>
+                <div class="browse-actions">
+                    <button class="btn sm" id="bStudyBtn" onclick="Browse.studySelected()" disabled>Study Selected (0)</button>
+                    <button class="btn sm secondary" onclick="Browse.selectAll()">All</button>
+                    <button class="btn sm secondary" onclick="Browse.deselectAll()">None</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <input type="text" id="bSearch" class="search-input" placeholder="Search...">
+                <select id="bDeck"><option value="all">All Decks</option></select>
+                <select id="bChapter"><option value="all">All Chapters</option></select>
+            </div>
+            <div class="pill-row" id="bTypePills"></div>
+            <div class="topic-container" id="bTopicContainer">
+                <button class="topic-toggle" id="bTopicToggle">
+                    <span id="bTopicLabel">All Topics</span><span class="arrow">▼</span>
+                </button>
+                <div class="topic-panel" id="bTopicPanel">
+                    <div class="topic-actions">
+                        <button class="btn xs" onclick="Browse.selectAllTopics()">All</button>
+                        <button class="btn xs" onclick="Browse.deselectAllTopics()">None</button>
+                    </div>
+                    <div class="topic-list" id="bTopicList"></div>
+                </div>
+            </div>
+            <div class="cards-list" id="bCardList"></div>
+        </div>
+    </div>
+
+    <!-- ══════════════ QUIZ ══════════════ -->
+    <div id="quizView" class="view">
+        <div class="quiz-container">
+            <!-- Setup -->
+            <div id="qSetup">
+                <h2>Quiz Setup</h2>
+                <div class="filter-row">
+                    <select id="qDeck"><option value="all">All Decks</option></select>
+                    <select id="qChapter"><option value="all">All Chapters</option></select>
+                </div>
+                <div class="pill-row" id="qTypePills"></div>
+                <div class="topic-container" id="qTopicContainer">
+                    <button class="topic-toggle" id="qTopicToggle">
+                        <span id="qTopicLabel">All Topics</span><span class="arrow">▼</span>
+                    </button>
+                    <div class="topic-panel" id="qTopicPanel">
+                        <div class="topic-actions">
+                            <button class="btn xs" onclick="Quiz.selectAllTopics()">All</button>
+                            <button class="btn xs" onclick="Quiz.deselectAllTopics()">None</button>
+                        </div>
+                        <div class="topic-list" id="qTopicList"></div>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <select id="qCount">
+                        <option value="5">5 questions</option>
+                        <option value="10" selected>10 questions</option>
+                        <option value="20">20 questions</option>
+                        <option value="all">All</option>
+                    </select>
+                    <select id="qStyle">
+                        <option value="multiple">Multiple Choice</option>
+                        <option value="truefalse">True / False</option>
+                        <option value="mixed">Mixed</option>
+                    </select>
+                </div>
+                <button class="btn full primary start-btn" onclick="Quiz.start()">Start Quiz</button>
+            </div>
+            <!-- Active -->
+            <div id="qActive" style="display:none">
+                <div class="q-progress" id="qProgress">1 / 10</div>
+                <div id="qArea"></div>
+            </div>
+            <!-- Results -->
+            <div id="qResults" style="display:none">
+                <h2>Quiz Complete!</h2>
+                <div class="q-score" id="qScore">0 / 0 (0%)</div>
+                <div class="overlay-actions">
+                    <button class="btn primary" onclick="Quiz.retry()">Try Again</button>
+                    <button class="btn" onclick="Quiz.backToSetup()">Settings</button>
+                    <button class="btn secondary" onclick="App.switchView('home')">Home</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ INSIGHTS ══════════════ -->
+    <div id="insightsView" class="view">
+        <div style="max-width:800px;margin:0 auto;padding:20px 0">
+            <h2 style="color:#fff;margin:0 0 5px">Insights</h2>
+            <p style="color:#888;margin:0 0 15px;font-size:0.9rem">Select types to filter, click a topic to see its cards</p>
+            <div class="pill-row" id="iTypePills"></div>
+            <div id="iTopicList" style="margin-top:15px"></div>
+        </div>
+    </div>
+
+</div>
+
+<script src="js/storage.js?v=7"></script>
+<script src="js/cards.js?v=7"></script>
+<script src="js/ollama-checker.js?v=7"></script>
+<script src="js/study.js?v=7"></script>
+<script src="js/fillin.js?v=7"></script>
+<script src="js/browse.js?v=7"></script>
+<script src="js/quiz.js?v=7"></script>
+<script src="js/analyst.js?v=7"></script>
+<script src="js/app.js?v=7"></script>
+</body>
+</html>

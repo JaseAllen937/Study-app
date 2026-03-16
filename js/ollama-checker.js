@@ -3,7 +3,7 @@
 // Same object name (Ollama) so nothing else needs to change
 
 const Ollama = {
-    API_KEY: 'AIzaSyBo0wsPW5evuBC4MzRHT1ADJVOW3qj91lg',
+    API_KEY: 'AIzaSyCWLAO-7rxzk_c2DlNB3wa2WSPlcg-M_ow',
     MODEL: 'gemini-3.1-flash-lite-preview',
     TIMEOUT: 15000,
     isAvailable: null,

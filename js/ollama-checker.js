@@ -1,21 +1,27 @@
 // ============== AI Checker (Gemini) ==============
-// Cloud AI via Google Gemini API — drop-in replacement for ollama-checker.js
-// Same object name (Ollama) so nothing else needs to change
+// Reads API key from localStorage — never stored in source code
 
 const Ollama = {
-    API_KEY: 'AIzaSyCWLAO-7rxzk_c2DlNB3wa2WSPlcg-M_ow',
     MODEL: 'gemini-3.1-flash-lite-preview',
     TIMEOUT: 15000,
     isAvailable: null,
     _hintCache: {},
 
+    _getKey() {
+        return localStorage.getItem('gemini_api_key') || '';
+    },
+
     _url() {
-        return 'https://generativelanguage.googleapis.com/v1beta/models/' + this.MODEL + ':generateContent?key=' + this.API_KEY;
+        return 'https://generativelanguage.googleapis.com/v1beta/models/' + this.MODEL + ':generateContent?key=' + this._getKey();
     },
 
     // ─── Connection Check ───────────────────────────────────
 
     async checkConnection() {
+        if (!this._getKey()) {
+            this.isAvailable = false;
+            return { ok: false, reason: 'No API key set. Click ⚙ to enter your Gemini key.' };
+        }
         try {
             const res = await fetch(this._url(), {
                 method: 'POST',
@@ -42,6 +48,8 @@ const Ollama = {
     // ─── Gemini Call Helper ──────────────────────────────────
 
     async _call_gemini(prompt, json, timeout) {
+        if (!this._getKey()) throw new Error('No API key');
+
         const body = {
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { maxOutputTokens: 300 }
@@ -62,42 +70,6 @@ const Ollama = {
 
         const data = await res.json();
         return (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-    },
-
-    // ─── Strip Hints ────────────────────────────────────────
-
-    async stripHints(text, cardFront) {
-        if (!text) return text;
-        if (this._hintCache[text]) return this._hintCache[text];
-
-        try {
-            const cleaned = await this._call_gemini(
-                'A French flashcard has this on the back:\n"' + text + '"\n\n' +
-                'The French word on the front is: "' + cardFront + '"\n\n' +
-                'The student sees your output and must guess the French word. ' +
-                'Return ONLY the core English definition. Remove: French words, notes, pronunciation, phonetics, brackets, gender, singular/plural, examples. ' +
-                'If it is a time expression or grammar concept, give a clear short English explanation. ' +
-                'Return ONLY the cleaned text, nothing else.',
-                false, 10000
-            );
-
-            if (cleaned && cleaned.length > 0 && cleaned.length < text.length * 3) {
-                this._hintCache[text] = cleaned;
-                return cleaned;
-            }
-        } catch (e) {
-            console.warn('AI strip failed:', e.message);
-        }
-
-        // Fallback: hardcoded strip
-        return text.split('\n').filter(function(l) {
-            var t = l.trim().toLowerCase();
-            return !t.startsWith('note:') && !t.startsWith('example:') && !t.startsWith('pronunciation:')
-                && !t.startsWith('gender:') && !t.startsWith('singular:') && !t.startsWith('plural:')
-                && !t.startsWith('examples:') && !t.startsWith('ex:') && !t.startsWith('notes:');
-        }).map(function(l) {
-            return l.replace(/\s*Note:.*$/i, '').replace(/\s*Pronunciation:.*$/i, '').replace(/\s*\[.*?\]/g, '').trim();
-        }).filter(Boolean).join('\n').trim() || text;
     },
 
     // ─── Check Answer ───────────────────────────────────────
@@ -160,3 +132,36 @@ const Ollama = {
         }
     }
 };
+
+// ─── API Key UI Helper ──────────────────────────────────
+function saveApiKey() {
+    const input = document.getElementById('apiKeyInput');
+    if (!input) return;
+    const key = input.value.trim();
+    if (key) {
+        localStorage.setItem('gemini_api_key', key);
+        input.value = '';
+        document.getElementById('apiKeyStatus').textContent = '✓ Key saved';
+        document.getElementById('apiKeyStatus').style.color = '#22c55e';
+    }
+}
+
+function clearApiKey() {
+    localStorage.removeItem('gemini_api_key');
+    document.getElementById('apiKeyStatus').textContent = 'Key cleared';
+    document.getElementById('apiKeyStatus').style.color = '#f87171';
+}
+
+// Show current status on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('apiKeyStatus');
+    if (el) {
+        if (localStorage.getItem('gemini_api_key')) {
+            el.textContent = '✓ Key is set';
+            el.style.color = '#22c55e';
+        } else {
+            el.textContent = 'No key set';
+            el.style.color = '#888';
+        }
+    }
+});

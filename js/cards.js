@@ -137,6 +137,35 @@ const Cards = {
         return lines[0] || text;
     },
 
+    // Get ONLY the English definition for Back→Front display.
+    // Takes first line, strips anything after Gender/Note/Pronunciation markers.
+    getDefinition(text) {
+        if (!text) return text;
+        // Get first meaningful line
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        let def = '';
+        for (const line of lines) {
+            const lower = line.toLowerCase();
+            if (lower.startsWith('pronunciation:') || lower.startsWith('example:') ||
+                lower.startsWith('examples:') || lower.startsWith('ex:') ||
+                lower.startsWith('note:') || lower.startsWith('notes:') ||
+                lower.startsWith('gender:') || lower.startsWith('singular:') ||
+                lower.startsWith('plural:')) continue;
+            // Skip lines that look French (start with le/la/les/l'/un/une/il/elle/c'est/des)
+            if (/^(le |la |les |l'|un |une |il |elle |des |du |au |c'est)/i.test(lower)) continue;
+            def = line;
+            break;
+        }
+        if (!def) def = lines[0] || text;
+        // Strip mid-line markers
+        def = def.replace(/\s*Gender\s*forms?:.*$/i, '');
+        def = def.replace(/\s*Note:.*$/i, '');
+        def = def.replace(/\s*Pronunciation:.*$/i, '');
+        def = def.replace(/\s*[—–-]+\s*(le |la |les |l'|un |une ).*$/i, '');
+        def = def.replace(/\s*\[.*?\]/g, '');
+        return def.trim() || lines[0] || text;
+    },
+
     // Strip example lines (keeps pronunciation, removes examples)
     // Used in Fill-in-the-Blank and Back→Front study mode
     stripExamples(text) {

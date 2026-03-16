@@ -266,24 +266,13 @@ const Study = {
         this.updateControls();
         document.getElementById('sStartBtn').style.display = 'none';
         document.getElementById('sEndBtn').style.display = this.mode === 'drill' ? 'block' : 'none';
-
-        // Auto-check Ollama for AI hint stripping in Back→Front
-        if (this.direction === 'back' && Ollama.isAvailable === null) {
-            Ollama.checkConnection().then(() => {
-                // Re-show card with AI-stripped text if connected
-                if (Ollama.isAvailable && this.active && !this.flipped) {
-                    this.showCard();
-                }
-            });
-        }
     },
 
     // ─── Card Display ───────────────────────────────────────
 
-    async showCard() {
+    showCard() {
         const card = this.cards[this.idx];
         if (!card) return;
-        console.log('[Study.showCard] direction=' + this.direction + ' card=' + card.front);
 
         this.flipped = false;
         const fc = document.getElementById('sFlashcard');
@@ -300,21 +289,7 @@ const Study = {
             document.getElementById('sCardBadge').textContent = card.type;
         } else {
             document.getElementById('sCardBadge').textContent = 'definition';
-            document.getElementById('sCardContent').textContent = 'Cleaning hints...';
-            console.log('[Study.showCard] calling stripHints...');
-
-            try {
-                const cleaned = await Ollama.stripHints(card.back, card.front);
-                console.log('[Study.showCard] got cleaned:', cleaned.substring(0, 50));
-                if (this.cards[this.idx] === card && !this.flipped) {
-                    document.getElementById('sCardContent').textContent = cleaned;
-                }
-            } catch (e) {
-                console.error('[Study.showCard] stripHints error:', e);
-                if (this.cards[this.idx] === card && !this.flipped) {
-                    document.getElementById('sCardContent').textContent = Cards.stripExamples(card.back);
-                }
-            }
+            document.getElementById('sCardContent').textContent = Cards.getDefinition(card.back);
         }
     },
 
@@ -331,21 +306,8 @@ const Study = {
             document.getElementById('sCardHint').textContent = 'Click to see prompt';
         } else {
             fc.classList.remove('flipped');
-            if (this.direction === 'front') {
-                document.getElementById('sCardContent').textContent = card.front;
-            } else {
-                // Re-show cleaned text
-                document.getElementById('sCardContent').textContent = '...';
-                Ollama.stripHints(card.back, card.front).then(cleaned => {
-                    if (this.cards[this.idx] === card && !this.flipped) {
-                        document.getElementById('sCardContent').textContent = cleaned;
-                    }
-                }).catch(() => {
-                    if (this.cards[this.idx] === card && !this.flipped) {
-                        document.getElementById('sCardContent').textContent = Cards.stripExamples(card.back);
-                    }
-                });
-            }
+            document.getElementById('sCardContent').textContent =
+                this.direction === 'front' ? card.front : Cards.getDefinition(card.back);
             document.getElementById('sCardHint').textContent = 'Click or press space to flip';
         }
         this.updateControls();

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study System</title>
-    <link rel="stylesheet" href="css/styles.css?v=7">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <div id="app">
@@ -18,7 +18,6 @@
             <button class="nav-btn" data-view="fillin">Fill-in</button>
             <button class="nav-btn" data-view="browse">Browse</button>
             <button class="nav-btn" data-view="quiz">Quiz</button>
-            <button class="nav-btn" data-view="insights">Insights</button>
         </div>
         <button class="nav-btn load-btn" id="loadDeckBtn">+ Load Deck</button>
         <input type="file" id="fileInput" accept=".json" multiple hidden>
@@ -55,6 +54,18 @@
                     <span class="action-text">Quiz</span>
                     <span class="action-sub">Test yourself</span>
                 </button>
+            </div>
+            <div class="decks-section">
+                <h2>⚙ AI Settings</h2>
+                <div style="background:#1a1a2e;border:1px solid #2a2a4a;border-radius:10px;padding:14px;margin-bottom:20px">
+                    <p style="color:#888;font-size:0.85rem;margin-bottom:8px">Enter your Gemini API key to enable AI answer checking. Get one free at <a href="https://aistudio.google.com/apikeys" target="_blank" style="color:#7c7cf7">aistudio.google.com</a></p>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                        <input type="password" id="apiKeyInput" placeholder="Paste API key here..." style="flex:1;min-width:200px;padding:8px 12px;background:#141428;border:1px solid #2a2a4a;border-radius:8px;color:#e0e0e0;font-family:inherit;font-size:0.85rem">
+                        <button class="btn sm" onclick="saveApiKey()">Save Key</button>
+                        <button class="btn sm secondary" onclick="clearApiKey()">Clear</button>
+                        <span id="apiKeyStatus" style="font-size:0.82rem"></span>
+                    </div>
+                </div>
             </div>
             <div class="decks-section">
                 <h2>Your Decks</h2>
@@ -168,11 +179,11 @@
                     <span class="opt-desc">Missed cards return until correct</span>
                 </label>
                 <label class="opt-toggle" style="margin-top:10px">
-                    <input type="checkbox" id="fSmartCheck">
+                    <input type="checkbox" id="fAIToggle">
                     <span class="opt-label">🤖 AI Checking</span>
                     <span class="opt-desc">Ollama checks your answers smartly</span>
                 </label>
-                <div id="fAiStatus" class="ai-status"></div>
+                <div id="fAIStatus" class="ai-status"></div>
             </div>
             <!-- Progress -->
             <div class="progress"><div class="progress-bar"><div class="progress-fill" id="fProgressFill"></div></div>
@@ -307,26 +318,15 @@
         </div>
     </div>
 
-    <!-- ══════════════ INSIGHTS ══════════════ -->
-    <div id="insightsView" class="view">
-        <div style="max-width:800px;margin:0 auto;padding:20px 0">
-            <h2 style="color:#fff;margin:0 0 5px">Insights</h2>
-            <p style="color:#888;margin:0 0 15px;font-size:0.9rem">Select types to filter, click a topic to see its cards</p>
-            <div class="pill-row" id="iTypePills"></div>
-            <div id="iTopicList" style="margin-top:15px"></div>
-        </div>
-    </div>
-
 </div>
 
-<script src="js/storage.js?v=7"></script>
-<script src="js/cards.js?v=7"></script>
-<script src="js/ollama-checker.js?v=7"></script>
-<script src="js/study.js?v=7"></script>
-<script src="js/fillin.js?v=7"></script>
-<script src="js/browse.js?v=7"></script>
-<script src="js/quiz.js?v=7"></script>
-<script src="js/analyst.js?v=7"></script>
-<script src="js/app.js?v=7"></script>
+<script src="js/storage.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/ollama-checker.js"></script>
+<script src="js/study.js"></script>
+<script src="js/fillin.js"></script>
+<script src="js/browse.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

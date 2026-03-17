@@ -110,7 +110,7 @@ const Ollama = {
                     'Student typed: "' + userAnswer + '"\n\n' +
                     'RULES:\n' +
                     '- Student must answer in FRENCH.\n' +
-                    '- Accept with or without article (le/la/les/un/une).\n' +
+                    '- Must have correct article (le/la/les/un/une).\n' +
                     '- Accept minor typos and missing accents.\n' +
                     '- Only WRONG if they wrote English or completely wrong French word.\n\n' +
                     'JSON only: {"isCorrect": true/false, "confidence": 0-100, "feedback": "brief reason"}';
